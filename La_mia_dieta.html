@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f7d5b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="La mia dieta">
+<title>La mia dieta</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--green:#2f7d5b;--green2:#eaf5ef;--ink:#18352a;--muted:#6d7b74;--bg:#f6f8f6;--card:#fff;--line:#e3e9e5;--accent:#f1b84b}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{background:linear-gradient(135deg,#2f7d5b,#3e9470);color:white;padding:22px 18px 18px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px #0002}
+header h1{margin:0;font-size:24px} header p{margin:5px 0 0;opacity:.88;font-size:13px}
+nav{display:flex;gap:8px;overflow:auto;padding:12px 14px;background:white;border-bottom:1px solid var(--line);position:sticky;top:82px;z-index:9}
+nav button{border:0;background:#eef3ef;color:var(--green);border-radius:999px;padding:9px 14px;font-weight:700;white-space:nowrap}
+nav button.active{background:var(--green);color:white}
+main{max-width:760px;margin:auto;padding:14px 14px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px #18352a08}
+.daytitle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.daytitle h2{margin:0;font-size:21px}.badge{font-size:12px;background:var(--green2);color:var(--green);padding:6px 9px;border-radius:999px;font-weight:700}
+.meal{border-top:1px solid var(--line);padding:15px 0 2px}.meal:first-child{border-top:0;padding-top:5px}
+.meal h3{margin:0 0 9px;font-size:16px;color:var(--green)}
+.item{display:flex;gap:9px;align-items:flex-start;margin:8px 0;line-height:1.4;font-size:15px}
+.item input{margin-top:3px;accent-color:var(--green);width:18px;height:18px;flex:0 0 auto}
+.item.done span{text-decoration:line-through;opacity:.48}
+.search{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;font-size:16px;outline:none;background:white}
+.search:focus{border-color:var(--green)}
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.quick button{border:1px solid var(--line);background:white;border-radius:14px;padding:14px;text-align:left;color:var(--ink);font-weight:700}
+.quick small{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+.progress{height:9px;background:#e9eeeb;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--green);width:0}
+.water{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.water button{border:1px solid var(--line);background:white;border-radius:12px;padding:11px 4px;font-weight:700;color:var(--green)}
+.water button.on{background:var(--green2);border-color:#bcdcc9}
+ul{padding-left:20px;line-height:1.55} .note{color:var(--muted);font-size:13px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+.hidden{display:none!important}
+@media(min-width:700px){main{padding-top:22px}.quick{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🥗 La mia dieta</h1>
+  <p>Piano alimentare settimanale · 23/09/2026</p>
+</header>
+<nav id="days"></nav>
+<main>
+  <input id="search" class="search" placeholder="Cerca un alimento, un pasto o una quantità…">
+  <div class="quick">
+    <button onclick="showTab('oggi')">📅 Oggi<small>Apri il giorno corrente</small></button>
+    <button onclick="showTab('sostituzioni')">🔄 Sostituzioni<small>Alternative previste</small></button>
+    <button onclick="showTab('acqua')">💧 Acqua<small>Schema giornaliero</small></button>
+    <button onclick="resetChecks()">↺ Reset<small>Segna di nuovo i pasti</small></button>
+  </div>
+  <section id="content"></section>
+</main>
+<footer>Contenuto organizzato dal PDF fornito. Segui le indicazioni del professionista che ha elaborato il piano.</footer>
+<script>
+const breakfast=[
+"1 bustina di amminoacidi diluita in 150g latte vegetale senza zuccheri aggiunti (es. mandorla, avena, cocco) oppure latte di mucca parzialmente scremato senza lattosio + 50g cornflakes (non glassati)",
+"150g latte zymil o latte vegetale senza zuccheri aggiunti + n.6 biscotti oro saiwa integrali oppure n.6 biscotti Balocco Zeropiù + 2 noci",
+"N.3 fette biscottate integrali + 1 velo di marmellata hero + n.5 mandorle",
+"60g pane integrale o di segale + 2 cucchiaini di marmellata (preferibilmente della Hero light e scura) + n. 5 mandorle",
+"Pancakes con 40g farina di avena + 150g albume + 1 cucchiaino burro di arachidi 100%",
+"Porridge con 40g fiocchi di avena + 150g latte vegetale senza zuccheri aggiunti + 1 cucchiaino burro di arachidi 100%"
+];
+const days=[
+["Lunedì",[
+["Spuntino",["1 yogurt bianco senza lattosio + 2 noci"]],
+["Pranzo",["70g cous cous + 100g mozzarella di mucca, pomodorini e rucola","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["150g frutta fresca + 20g cioccolata fondente >80%"]],
+["Cena",["70g pane integrale","160g petto di tacchino alla piastra","Verdura cotta e/o cruda a volontà","1 ½ cucchiaio olio EVO"]]]],
+["Martedì",[
+["Spuntino",["20g anacardi + 1 banana poco matura"]],
+["Pranzo",["70g riso basmati + 2 uova","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["1 yogurt greco 0% grassi"]],
+["Cena",["250g polpo + 350g patate","Verdura cotta e/o cruda a volontà","1 ½ cucchiaio olio EVO"]]]],
+["Mercoledì",[
+["Spuntino",["20g anacardi + 100g frutta fresca"]],
+["Pranzo",["70g pasta integrale + 100g ricotta di mucca","Verdura cotta e/o cruda a volontà","1 ½ cucchiaio olio EVO"]],
+["Spuntino",["1 yogurt greco 0% grassi + 20g cioccolata fondente >80%"]],
+["Cena",["60g riso + 150g ceci cotti (se in barattolo) oppure 50g peso ceci decorticati secchi","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]]]],
+["Giovedì",[
+["Spuntino",["100g frutta fresca + 20g anacardi"]],
+["Pranzo",["70g pasta + 150g piselli + 1 cucchiaio di parmigiano","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["1 yogurt greco 0% grassi + 20g cioccolata fondente >80%"]],
+["Cena",["160g straccetti di manzo + 70g pane integrale","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]]]],
+["Venerdì",[
+["Spuntino",["20g nocciole"]],
+["Pranzo",["N.2 uova + 70g pane integrale","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["1 vasetto di kefir bianco + 1 banana poco matura"]],
+["Cena",["200g anelli di calamari o totani in padella","70g pane integrale","Verdura cotta e/o cruda a volontà","1 ½ cucchiaio olio EVO"]]]],
+["Sabato",[
+["Spuntino",["100g frutta fresca + 10 mandorle"]],
+["Pranzo",["100g primo sale + 70g pane integrale","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["1 yogurt alla frutta senza zuccheri aggiunti"]],
+["Cena",["Pasto libero"]]]],
+["Domenica",[
+["Spuntino",["20g nocciole"]],
+["Pranzo",["70g pasta integrale + proteina a scelta","Verdura cotta e/o cruda a volontà","1 cucchiaio olio EVO"]],
+["Spuntino",["1 vasetto di kefir bianco"]],
+["Cena",["100g lenticchie cotte + 60g pasta","Verdura cotta e/o cruda a volontà","1 ½ cucchiaio olio EVO"]]]]
+];
+
+const substitutions=[
+["Cereali / pasta / pane",["70g farro, orzo, cous cous, quinoa, amaranto, grano saraceno, miglio","70g pasta","70g pane"]],
+["Carne",["160g petto di pollo, petto di tacchino, manzo, vitello, maiale","100g fesa di tacchino/petto di pollo affettato","100g bresaola","N.2 uova"]],
+["Pesce",["250g calamari, merluzzo, nasello, trota, baccalà, sgombro, alici, sardine, seppie, dentice, rombo, spigola, orata, razza, triglia, acciughe","100g salmone/pesce spada affumicato","250g salmone fresco","250g tonno fresco","80g tonno in vetro ben sgocciolato"]],
+["Latticini",["100g ricotta di mucca","100g primo sale","100g mozzarella di mucca","250g fiocchi di latte"]]
+];
+
+let current=0, checks=JSON.parse(localStorage.getItem("dietaChecks")||"{}");
+const daysNav=document.getElementById("days");
+days.forEach((d,i)=>{let b=document.createElement("button");b.textContent=d[0];b.onclick=()=>showDay(i);daysNav.appendChild(b)});
+function key(d,m,i){return d+"-"+m+"-"+i}
+function item(text,d,m,i){let k=key(d,m,i), checked=!!checks[k];return `<label class="item ${checked?'done':''}"><input type="checkbox" ${checked?'checked':''} onchange="toggle('${k}',this)"><span>${text}</span></label>`}
+function showDay(i){current=i;daysNav.querySelectorAll("button").forEach((b,n)=>b.classList.toggle("active",n===i));showTab("day")}
+function showTab(tab){
+ if(tab==="oggi"){let day=(new Date().getDay()+6)%7;showDay(day);return}
+ if(tab==="sostituzioni"){daysNav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));renderSubs();return}
+ if(tab==="acqua"){daysNav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));renderWater();return}
+ renderDay(current)
+}
+function renderDay(i){
+let d=days[i];let html=`<div class="card"><div class="daytitle"><h2>${d[0]}</h2><span class="badge">Piano giornaliero</span></div>`;
+html+=`<div class="meal"><h3>☕ Colazione · scegli 1 alternativa</h3>${breakfast.map((x,j)=>item(x,"colazione",j,j)).join("")}</div>`;
+d[1].forEach((m,mi)=>{html+=`<div class="meal"><h3>${m[0]}</h3>${m[1].map((x,j)=>item(x,d[0],mi,j)).join("")}</div>`});
+html+=`</div><div class="card"><b>Avanzamento di oggi</b><div style="margin-top:9px" class="progress"><i id="prog"></i></div><p class="note">Le spunte vengono salvate sul dispositivo.</p></div>`;
+document.getElementById("content").innerHTML=html;updateProgress()
+}
+function renderSubs(){let html='<div class="card"><h2>🔄 Sostituzioni</h2><p class="note">Alternative riportate nel piano alimentare.</p>';
+substitutions.forEach(s=>{html+=`<div class="meal"><h3>${s[0]}</h3>${s[1].map(x=>`<div class="item"><span>• ${x}</span></div>`).join("")}</div>`});html+='</div>';document.getElementById("content").innerHTML=html}
+function renderWater(){
+let saved=JSON.parse(localStorage.getItem("water")||"[]");
+let html='<div class="card"><h2>💧 Fabbisogno idrico giornaliero</h2><p>Schema riportato nel PDF: totale 3 L al giorno.</p><div class="water">';
+["09–12 · 1 L","13–14 · 0,5 L","15–18 · 1 L","19–22 · 0,5 L"].forEach((x,i)=>html+=`<button class="${saved[i]?'on':''}" onclick="water(${i})">${saved[i]?'✓ ':''}${x}</button>`);
+html+='</div><p class="note">Il piano indica anche alcune tipologie di acque consigliate: San Benedetto, Levissima, Egeria e Lauretana.</p></div>';
+html+='<div class="card"><h2>📌 Indicazioni e consigli</h2><ul><li>La verdura è obbligatoria: almeno 200 g per pasto.</li><li>Preferire cotture salutari.</li><li>Usare olio extra vergine di oliva preferibilmente a crudo.</li><li>Pesare gli alimenti a crudo e al netto degli scarti.</li><li>Bere solo acqua ed evitare bevande gassose ed alcol.</li><li>Bere 3 L di acqua al giorno.</li><li>Limitare il sale.</li><li>Insaporire con spezie e/o odori a piacere.</li><li>Associare attività fisica alla corretta alimentazione.</li><li>Non saltare le portate e masticare lentamente.</li><li>Per il caffè, usare stevia, eritritolo o inulina invece dello zucchero.</li></ul></div>';
+document.getElementById("content").innerHTML=html
+}
+function water(i){let a=JSON.parse(localStorage.getItem("water")||"[]");a[i]=!a[i];localStorage.setItem("water",JSON.stringify(a));renderWater()}
+function toggle(k,el){checks[k]=el.checked;localStorage.setItem("dietaChecks",JSON.stringify(checks));el.closest(".item").classList.toggle("done",el.checked);updateProgress()}
+function updateProgress(){let els=document.querySelectorAll(".item input");if(!els.length)return;let n=[...els].filter(x=>x.checked).length;document.getElementById("prog").style.width=(n/els.length*100)+"%"}
+function resetChecks(){checks={};localStorage.removeItem("dietaChecks");renderDay(current)}
+document.getElementById("search").addEventListener("input",e=>{
+ let q=e.target.value.toLowerCase().trim(); if(!q){renderDay(current);return}
+ daysNav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+ let hits=[];
+ days.forEach((d,di)=>d[1].forEach((m,mi)=>m[1].forEach((x,j)=>{if((d[0]+" "+m[0]+" "+x).toLowerCase().includes(q))hits.push([d[0],m[0],x])})));
+ let bh=breakfast.filter(x=>x.toLowerCase().includes(q));
+ let html=`<div class="card"><h2>🔎 Risultati</h2>${bh.map(x=>`<div class="item"><span>☕ Colazione — ${x}</span></div>`).join("")}${hits.map(h=>`<div class="meal"><h3>${h[0]} · ${h[1]}</h3><div class="item"><span>${h[2]}</span></div></div>`).join("")}${(!bh.length&&!hits.length?'<p>Nessun risultato.</p>':'')}</div>`;
+document.getElementById("content").innerHTML=html
+});
+showDay(0);
+</script>
+</body>
+</html>
